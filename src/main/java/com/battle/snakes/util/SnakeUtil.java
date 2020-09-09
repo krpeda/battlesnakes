@@ -31,7 +31,7 @@ public class SnakeUtil {
     boolean isInBounds = false;
     int coordinateX = coordinate.getX();
     int coordinateY = coordinate.getY();
-    if(coordinateX >= 0 || coordinateY >= 0) {
+    if(coordinateX >= 0 && coordinateY >= 0) {
       isInBounds = coordinateY < board.getHeight() && coordinateX < board.getWidth();
     }
     return isInBounds;
@@ -44,11 +44,11 @@ public class SnakeUtil {
     int x = start.getX();
     int y = start.getY();
     switch (moveType) {
-      case DOWN:
-        y += 1;
-        break;
       case UP:
         y -= 1;
+        break;
+      case DOWN:
+        y += 1;
         break;
       case RIGHT:
         x += 1;
@@ -73,7 +73,7 @@ public class SnakeUtil {
     for(MoveType moveType: MoveType.values()) {
       moveCoordinate = getNextMoveCoords(moveType, snakePosition.get(0));
       if(isInBounds(request.getBoard(), moveCoordinate)) {
-        if(!isCollidingWithSnake(snakePosition.get(0),moveCoordinate, request)) {
+        if(!isCollidingWithSnake(moveCoordinate, request)) {
           allowedMoves.add(moveType);
         }
       }
@@ -105,20 +105,19 @@ public class SnakeUtil {
   }
 
   //todo write test
-  public static boolean isCollidingWithSnake(Coordinate startingPoint, Coordinate destination, MoveRequest request) {
+  public static boolean isCollidingWithSnake(Coordinate destination, MoveRequest request) {
     List<Coordinate> invalidCoordinates = new ArrayList<>();
-    Coordinate snakeHead;
+    List<Coordinate> protagonistBody;
 
+    protagonistBody = request.getYou().getBody();
+
+    //add all other snake bodies to invalid moves
     for (Snake snake : request.getBoard().getSnakes()) {
-      snakeHead = snake.getBody().get(0);
-      if (snakeHead.getX().equals(startingPoint.getX())
-              && snakeHead.getY().equals(startingPoint.getY())) {
-        invalidCoordinates.addAll(snake.getBody().subList(1, snake.getBody().size()));
-      } else {
         invalidCoordinates.addAll(snake.getBody());
-      }
-
     }
+    //add protagonist body(except head) to invalid moves
+    invalidCoordinates.addAll(protagonistBody.subList(1, protagonistBody.size()));
+
     return invalidCoordinates
             .stream()
             .anyMatch(coordinate -> coordinate.getX().equals(destination.getX())
