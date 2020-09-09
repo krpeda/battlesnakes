@@ -4,6 +4,7 @@ package com.battle.snakes.util;
 import com.battle.snakes.game.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SnakeUtil {
 
@@ -13,40 +14,50 @@ public class SnakeUtil {
     /* TODO
      * Given all possible moves, picks a random move
      * */
-    int random = RANDOM.nextInt(possibleMoves.size() - 1);
-    return possibleMoves.get(random);
+    MoveType foundMove;
+    if (possibleMoves.size() > 0) {
+      int random = RANDOM.nextInt(possibleMoves.size());
+      foundMove = possibleMoves.get(random);
+    } else {
+      foundMove = null;
+    }
+    return foundMove;
   }
 
   public static boolean isInBounds(Board board, Coordinate coordinate) {
     /* TODO
      * Given the game board, calculates if a coordinate is within the board
      * */
+    boolean isInBounds = false;
     int coordinateX = coordinate.getX();
     int coordinateY = coordinate.getY();
-    if(coordinateX <= 0 || coordinateY <= 0) {
-      return false;
-    } else {
-      return coordinateY <= board.getHeight() && coordinateX <= board.getWidth();
+    if(coordinateX >= 0 || coordinateY >= 0) {
+      isInBounds = coordinateY < board.getHeight() && coordinateX < board.getWidth();
     }
+    return isInBounds;
   }
 
   public static Coordinate getNextMoveCoords(MoveType moveType, Coordinate start) {
     /* TODO
      * Given the move type and the start coordinate, returns the coordinates of the next move
      * */
-    int coordinateX = start.getX();
-    int coordinateY = start.getY();
+    int x = start.getX();
+    int y = start.getY();
     switch (moveType) {
-      case UP:
-        coordinateY += 1;
       case DOWN:
-        coordinateY -= 1;
+        y += 1;
+        break;
+      case UP:
+        y -= 1;
+        break;
       case RIGHT:
-        coordinateX += 1;
+        x += 1;
+        break;
       case LEFT:
-        coordinateX -= 1;
+        x -= 1;
+        break;
     }
-    return Coordinate.builder().x(coordinateX).y(coordinateY).build();
+    return Coordinate.builder().x(x).y(y).build();
   }
 
   public static List<MoveType> getAllowedMoves(MoveRequest request) {
@@ -55,18 +66,18 @@ public class SnakeUtil {
      * Hint: finding all the coordinates leading to the snakes death and
      * comparing it to the potential moves is a good starting point
      * */
-
-
+    Coordinate moveCoordinate;
     List<MoveType> allowedMoves = new ArrayList<>();
-    Snake snake = request.getYou();
-    List<Coordinate> snakePosition = snake.getBody();
-
-    //Saa katte lauaaareni viivad moveid + teiste snakeide vastu viivad moveid
+    List<Coordinate> snakePosition = request.getYou().getBody();
 
     for(MoveType moveType: MoveType.values()) {
-
+      moveCoordinate = getNextMoveCoords(moveType, snakePosition.get(0));
+      if(isInBounds(request.getBoard(), moveCoordinate)) {
+        if(!isCollidingWithSnake(snakePosition.get(0),moveCoordinate, request)) {
+          allowedMoves.add(moveType);
+        }
+      }
     }
-
     return allowedMoves;
   }
 
@@ -91,5 +102,26 @@ public class SnakeUtil {
      * */
     return Coordinate.builder()
             .build();
+  }
+
+  //todo write test
+  public static boolean isCollidingWithSnake(Coordinate startingPoint, Coordinate destination, MoveRequest request) {
+    List<Coordinate> invalidCoordinates = new ArrayList<>();
+    Coordinate snakeHead;
+
+    for (Snake snake : request.getBoard().getSnakes()) {
+      snakeHead = snake.getBody().get(0);
+      if (snakeHead.getX().equals(startingPoint.getX())
+              && snakeHead.getY().equals(startingPoint.getY())) {
+        invalidCoordinates.addAll(snake.getBody().subList(1, snake.getBody().size()));
+      } else {
+        invalidCoordinates.addAll(snake.getBody());
+      }
+
+    }
+    return invalidCoordinates
+            .stream()
+            .anyMatch(coordinate -> coordinate.getX().equals(destination.getX())
+                    && coordinate.getY().equals(destination.getY()));
   }
 }

@@ -14,8 +14,13 @@ class SnakeUtilTest {
     @Test
     void getRandomMove() {
         // The problem with randomness is that you can never be sure...
-        SnakeUtil.getRandomMove(new ArrayList<>());
-        fail();
+        List<MoveType> moveList = new ArrayList<>();
+        List<MoveType> emptyMoveList = new ArrayList<>();
+        moveList.add(MoveType.UP);
+
+        assertNull(SnakeUtil.getRandomMove(emptyMoveList));
+        assertNotNull(SnakeUtil.getRandomMove(moveList));
+        assertEquals(MoveType.UP, SnakeUtil.getRandomMove(moveList));
     }
 
     //////////////////////////////////////////

@@ -4,10 +4,10 @@ so make it simple. Delete the contents and write your own notes here.
 
 
 -- TASK 1
-* TODO!
+Complete randomtest
 
 -- TASK 2
-* TODO!
+Complete Utils
 
 -- TASK 3
 * TODO!
