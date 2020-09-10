@@ -2,9 +2,7 @@ package com.battle.snakes.util;
 
 
 import com.battle.snakes.game.*;
-
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class SnakeUtil {
 
@@ -85,7 +83,12 @@ public class SnakeUtil {
     /* TODO
      * Given two coordinates on a 2D grid, calculates the distance between them
      * */
-    return 0;
+    double distance;
+    double a = Math.abs(first.getX() - second.getX());
+    double b = Math.abs(first.getY() - second.getY());
+    distance = Math.sqrt(Math.pow(a,2) + Math.pow(b,2));
+
+    return distance;
   }
 
   public static MoveType getNearestMoveToTarget(Coordinate target, Coordinate current, List<MoveType> moves) {
@@ -93,15 +96,27 @@ public class SnakeUtil {
      * Given the target coordinate, the current coordinate and a list of moves, returns
      * the nearest move to the target, selected from the moves list
      * */
-    return MoveType.LEFT;
+    Map<Double, MoveType> distances = new HashMap<>();
+    Coordinate moveCoordinate;
+
+    for(MoveType move : moves) {
+      moveCoordinate = getNextMoveCoords(move,current);
+      distances.put(getDistance(moveCoordinate,target),move);
+    }
+    return distances.get(Collections.min(distances.keySet()));
   }
 
   public static Coordinate getNearestCoordinateToTarget(Coordinate target, List<Coordinate> coords) {
     /* TODO
      * Given the target coordinate and a list of coordinates, finds the nearest coordinate to the target
      * */
-    return Coordinate.builder()
-            .build();
+
+    Map<Double, Coordinate> distances = new HashMap<>();
+    for(Coordinate coordinate : coords) {
+      distances.put(getDistance(coordinate, target), coordinate);
+    }
+
+    return distances.get(Collections.min(distances.keySet()));
   }
 
   //todo write test
