@@ -2,8 +2,11 @@ package com.battle.snakes.util;
 
 
 import com.battle.snakes.game.*;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.*;
 
+@Slf4j
 public class SnakeUtil {
 
   private static final Random RANDOM = new Random();
@@ -13,12 +16,9 @@ public class SnakeUtil {
      * Given all possible moves, picks a random move
      * */
     MoveType foundMove;
-    if (possibleMoves.size() > 0) {
-      int random = RANDOM.nextInt(possibleMoves.size());
-      foundMove = possibleMoves.get(random);
-    } else {
-      foundMove = null;
-    }
+    int random = RANDOM.nextInt(possibleMoves.size());
+    foundMove = possibleMoves.get(random);
+
     return foundMove;
   }
 
@@ -58,6 +58,26 @@ public class SnakeUtil {
     return Coordinate.builder().x(x).y(y).build();
   }
 
+  //todo write test
+  public static boolean isCollidingWithSnake(Coordinate destination, MoveRequest request) {
+    List<Coordinate> invalidCoordinates = new ArrayList<>();
+    List<Coordinate> protagonistBody;
+
+    protagonistBody = request.getYou().getBody();
+
+    //add all other snake bodies to invalid moves
+    for (Snake snake : request.getBoard().getSnakes()) {
+      invalidCoordinates.addAll(snake.getBody());
+    }
+    //add protagonist body to invalid moves
+    invalidCoordinates.addAll(protagonistBody);
+
+    return invalidCoordinates
+            .stream()
+            .anyMatch(coordinate -> coordinate.getX().equals(destination.getX())
+                    && coordinate.getY().equals(destination.getY()));
+  }
+
   public static List<MoveType> getAllowedMoves(MoveRequest request) {
     /* TODO
      * Given the move request, returns a list of all the moves that do not end in the snake dieing
@@ -70,10 +90,9 @@ public class SnakeUtil {
 
     for(MoveType moveType: MoveType.values()) {
       moveCoordinate = getNextMoveCoords(moveType, snakePosition.get(0));
-      if(isInBounds(request.getBoard(), moveCoordinate)) {
-        if(!isCollidingWithSnake(moveCoordinate, request)) {
+      if(isInBounds(request.getBoard(), moveCoordinate)
+              && !isCollidingWithSnake(moveCoordinate, request)) {
           allowedMoves.add(moveType);
-        }
       }
     }
     return allowedMoves;
@@ -115,27 +134,57 @@ public class SnakeUtil {
     for(Coordinate coordinate : coords) {
       distances.put(getDistance(coordinate, target), coordinate);
     }
-
     return distances.get(Collections.min(distances.keySet()));
   }
 
-  //todo write test
-  public static boolean isCollidingWithSnake(Coordinate destination, MoveRequest request) {
-    List<Coordinate> invalidCoordinates = new ArrayList<>();
-    List<Coordinate> protagonistBody;
+//  public static boolean isTrappingMove(Coordinate futureLocation, MoveType move, MoveRequest request) {
+//    Snake futureSnake = request.getYou();
+//    int i = 0;
+//    while(i < 3) {
+//      futureSnake.getBody().add(0, futureLocation);
+//      request.setYou(futureSnake);
+//      if(getAllowedMoves(request).size() < 1) {
+//        return true;
+//      } else {
+//        for (MoveType futureMove : getAllowedMoves(request)) {
+//          return isTrappingMove(getNextMoveCoords(futureMove,futureLocation), futureMove, request);
+//        }
+//      }
+//      futureLocation = getNextMoveCoords(move, futureLocation);
+//      i++;
+//    }
+//    return false;
+//  }
 
-    protagonistBody = request.getYou().getBody();
+    public static List<Coordinate> getOptimalFoods(MoveRequest request) {
 
-    //add all other snake bodies to invalid moves
-    for (Snake snake : request.getBoard().getSnakes()) {
-        invalidCoordinates.addAll(snake.getBody());
+      List<Snake> boardSnakes = new ArrayList<>();
+      List<Coordinate> body = request.getYou().getBody();
+      List<Coordinate> optimalFoods = new ArrayList<>();
+      Coordinate hostileHead;
+
+      for (Snake snake: request.getBoard().getSnakes()) {
+        if (!snake.getId().equals(request.getYou().getId())) {
+          boardSnakes.add(snake);
+        }
+      }
+      Coordinate head = body.get(0);
+      List<Coordinate> foods = request.getBoard().getFood();
+
+      for(Coordinate food: foods) {
+        for(Snake snake : boardSnakes) {
+          hostileHead = snake.getBody().get(0);
+          if (SnakeUtil.getDistance(hostileHead, food) > SnakeUtil.getDistance(head,food)) {
+            optimalFoods.add(food);
+            log.info("ENEMY:" + SnakeUtil.getDistance(hostileHead, food) + " ME:" + SnakeUtil.getDistance(head,food));
+          } else if(snake.getBody().size() < body.size()
+                  && SnakeUtil.getDistance(hostileHead, food) == SnakeUtil.getDistance(head,food)) {
+            log.info("ENEMY:" + snake.getBody().size() + "  YOU:" + body.size());
+
+            optimalFoods.add(food);
+          }
+        }
+      }
+      return optimalFoods;
     }
-    //add protagonist body(except head) to invalid moves
-    invalidCoordinates.addAll(protagonistBody.subList(1, protagonistBody.size()));
-
-    return invalidCoordinates
-            .stream()
-            .anyMatch(coordinate -> coordinate.getX().equals(destination.getX())
-                    && coordinate.getY().equals(destination.getY()));
-  }
 }

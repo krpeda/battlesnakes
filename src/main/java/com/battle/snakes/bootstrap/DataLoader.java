@@ -15,15 +15,7 @@ public class DataLoader implements CommandLineRunner {
     static final int BOARD_HEIGHT = 15;
     @Override
     public void run(String... args) throws Exception {
-        List<MoveType> expected = new ArrayList<>();
-        expected.add(MoveType.DOWN);
-        expected.add(MoveType.RIGHT);
-        Snake snake = createSnake(0, 0);
 
-        MoveRequest request = createMoveRequestWithSnake(snake, BOARD_WIDTH, BOARD_HEIGHT);
-        List<MoveType> moves = SnakeUtil.getAllowedMoves(request);
-
-        System.out.println(moves);
 //        Game game = Game.builder()
 //                .id("3e02b354-ae29-4c3e-8c5b-26a04c764f8c")
 //                .build();
@@ -36,11 +28,11 @@ public class DataLoader implements CommandLineRunner {
 //        );
 //
 //        Snake snake = createSnake(4, 3);
-//        Snake snake2 = createSnake(3, 4);
+//        Snake snake2 = createSnake(4, 5);
 //
 //        List<Snake> snakes = new ArrayList<>();
 //        snakes.add(snake);
-//       snakes.add(snake2);
+//        snakes.add(snake2);
 //
 //        Board board = Board.builder()
 //                .width(6)
@@ -49,17 +41,28 @@ public class DataLoader implements CommandLineRunner {
 //                .snakes(snakes)
 //                .build();
 //
-//
+//        Snake protagonist = createSnake(2,2);
+//        protagonist.setName("MINA");
 //
 //        MoveRequest actual = MoveRequest.builder()
 //                .game(game)
 //                .board(board)
 //                .turn(1)
-//                .you(createSnake(3, 3))
+//                .you(protagonist)
 //                .build();
 //
 //        List<MoveType> moveTypes = SnakeUtil.getAllowedMoves(actual);
-//        System.out.println(moveTypes);
+//
+//        for (Snake oneSnake : actual.getBoard().getSnakes()) {
+//            System.out.println(oneSnake);
+//        }
+//
+//        System.out.println(SnakeUtil.getDistance(snake.getBody().get(0), snake2
+//        .getBody().get(0)));
+        Coordinate coordinate1 = Coordinate.builder().x(5).y(5).build();
+        Coordinate coordinate2 = Coordinate.builder().x(5).y(5).build();
+
+        System.out.println(coordinate1.equals(coordinate2));
 
     }
 
