@@ -4,7 +4,9 @@ package com.battle.snakes.util;
 import com.battle.snakes.game.*;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.Array;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class SnakeUtil {
@@ -156,35 +158,49 @@ public class SnakeUtil {
 //    return false;
 //  }
 
-    public static List<Coordinate> getOptimalFoods(MoveRequest request) {
+    //TODO write test
+    public static List<Coordinate> getOptimalFoods(MoveRequest request, List<Snake> hostileSnakes) {
 
-      List<Snake> boardSnakes = new ArrayList<>();
       List<Coordinate> body = request.getYou().getBody();
       List<Coordinate> optimalFoods = new ArrayList<>();
       Coordinate hostileHead;
 
-      for (Snake snake: request.getBoard().getSnakes()) {
-        if (!snake.getId().equals(request.getYou().getId())) {
-          boardSnakes.add(snake);
-        }
-      }
       Coordinate head = body.get(0);
       List<Coordinate> foods = request.getBoard().getFood();
 
       for(Coordinate food: foods) {
-        for(Snake snake : boardSnakes) {
+        for(Snake snake : hostileSnakes) {
           hostileHead = snake.getBody().get(0);
           if (SnakeUtil.getDistance(hostileHead, food) > SnakeUtil.getDistance(head,food)) {
             optimalFoods.add(food);
-            log.info("ENEMY:" + SnakeUtil.getDistance(hostileHead, food) + " ME:" + SnakeUtil.getDistance(head,food));
+//            log.info("ENEMY:" + SnakeUtil.getDistance(hostileHead, food) + " ME:" + SnakeUtil.getDistance(head,food));
           } else if(snake.getBody().size() < body.size()
                   && SnakeUtil.getDistance(hostileHead, food) == SnakeUtil.getDistance(head,food)) {
-            log.info("ENEMY:" + snake.getBody().size() + "  YOU:" + body.size());
-
+//            log.info("ENEMY:" + snake.getBody().size() + "  YOU:" + body.size());
             optimalFoods.add(food);
           }
         }
       }
       return optimalFoods;
     }
+
+    public static boolean isHeadCollision(Snake enemySnake, List<Coordinate> food, Coordinate targetCoordinate) {
+
+    Coordinate enemyTarget;
+    MoveType enemyMove;
+    boolean isCollision = false;
+
+    Coordinate enemyHead = enemySnake.getBody().get(0);
+    List<MoveType> possibleEnemyMoves = Arrays
+            .stream(MoveType.values())
+            .collect(Collectors.toList());
+    enemyTarget = getNearestCoordinateToTarget(enemyHead, food);
+    enemyMove = getNearestMoveToTarget(enemyTarget,enemyHead, possibleEnemyMoves);
+
+    if(getNextMoveCoords(enemyMove,enemyHead).equals(targetCoordinate)) {
+      isCollision = true;
+    }
+    return isCollision;
+    }
+
 }

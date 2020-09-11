@@ -38,9 +38,12 @@ public class GeniusSnakeController extends BaseController {
   public MoveResponse move(@RequestBody MoveRequest request) {
 
     List<Coordinate> body = request.getYou().getBody();
-    List<Coordinate> optimalFoods = new ArrayList<>();
+    List<Coordinate> optimalFoods;
     List<MoveType> moves = SnakeUtil.getAllowedMoves(request);
+    List<MoveType> futureMoves;
+    List<Snake> hostileSnakes = new ArrayList<>();
     Map<Integer, MoveType> optimalMoveMap = new HashMap<>();
+    List<MoveType> dangerousMoves = new ArrayList<>();
     MoveType mostOptimalMove;
     Coordinate optimalFood;
     Snake futureSnake;
@@ -52,7 +55,23 @@ public class GeniusSnakeController extends BaseController {
 
     log.info(" TURN:" + request.getTurn());
 
-    optimalFoods = SnakeUtil.getOptimalFoods(request);
+    for (Snake snake: request.getBoard().getSnakes()) {
+      if (!snake.getId().equals(request.getYou().getId())) {
+        hostileSnakes.add(snake);
+        if (snake.getBody().size() >= body.size()) {
+          for(MoveType moveType : moves) {
+            if(SnakeUtil.isHeadCollision(snake,foods, SnakeUtil.getNextMoveCoords(moveType,head))) {
+              dangerousMoves.add(moveType);
+              log.info(moveType.toString()+ ": ENEMY: " + snake.getBody().size() + " ME: " + body.size());
+            }
+          }
+        }
+      }
+    }
+
+
+
+    optimalFoods = SnakeUtil.getOptimalFoods(request,hostileSnakes);
 
     if (optimalFoods.size() < 1) {
       optimalFoods = foods;
@@ -61,22 +80,25 @@ public class GeniusSnakeController extends BaseController {
     optimalFood = SnakeUtil.getNearestCoordinateToTarget(head, optimalFoods);
     log.info(optimalFood.toString());
 
-    if (moves.size() > 1) {
-      for(MoveType moveType : moves) {
-        futureSnake = request.getYou();
-        futureSnake.getBody().add(0, SnakeUtil.getNextMoveCoords(moveType, head));
-        futureRequest = request;
-        futureRequest.setYou(futureSnake);
+//    if (moves.size() > 1) {
+//      for(MoveType moveType : moves) {
+//        futureSnake = request.getYou();
+//        futureSnake.getBody().add(0, SnakeUtil.getNextMoveCoords(moveType, head));
+//        futureRequest = request;
+//        futureRequest.setYou(futureSnake);
+//        futureMoves = SnakeUtil.getAllowedMoves(futureRequest);
+//
+//          optimalMoveMap.put(futureMoves.size(), moveType);
+//
+//      }
+//
+//      if(optimalMoveMap.keySet().stream().distinct().count() > 1) {
+//        moves.remove(optimalMoveMap.get(Collections.min(optimalMoveMap.keySet())));
+//        log.info("REMOVED MOVE:" + optimalMoveMap.get(Collections.min(optimalMoveMap.keySet())).toString());
+//      }
+//    }
 
-        if(!SnakeUtil.getNextMoveCoords(moveType, head).equals(optimalFood)) {
-          optimalMoveMap.put(SnakeUtil.getAllowedMoves(futureRequest).size(), moveType);
-        }
-      }
-      if(optimalMoveMap.keySet().stream().distinct().count() > 1) {
-        moves.remove(optimalMoveMap.get(Collections.min(optimalMoveMap.keySet())));
-        log.info("REMOVED MOVE:" + optimalMoveMap.get(Collections.min(optimalMoveMap.keySet())).toString());
-      }
-    }
+    moves.removeAll(dangerousMoves);
 
     if (moves.isEmpty()) {
       return MoveResponse.builder()
