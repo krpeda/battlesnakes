@@ -67,6 +67,8 @@ public class GeniusSnakeController extends BaseController {
     optimalFood = SnakeUtil.getNearestCoordinateToTarget(head, optimalFoods);
     log.info(optimalFood.toString());
 
+    //TODO choose trapping move over collision
+    log.info("BEFORE COLLISION DETECT: "  + body.size());
     if (!moves.isEmpty()) {
       for(MoveType moveType : moves) {
         futureLocation = SnakeUtil.getNextMoveCoords(moveType, head);

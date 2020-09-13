@@ -61,7 +61,7 @@ class SnakeUtilTest {
     @Test
     void isHeadCollision() {
         Snake snake = createSnake(7, 11);
-        Coordinate closeFood = createCoordinate(8, 11);
+        Coordinate closeFood = createCoordinate(8, 12);
         List<Coordinate> food = Collections.singletonList(closeFood);
 
         MoveRequest request = createMoveRequestWithSnake(snake, BOARD_WIDTH, BOARD_HEIGHT);

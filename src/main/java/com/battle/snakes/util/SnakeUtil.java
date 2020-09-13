@@ -138,6 +138,7 @@ public class SnakeUtil {
     return distances.get(Collections.min(distances.keySet()));
   }
 
+  //TODO fix body issue
   public static boolean isTrappingMove(Coordinate futureLocation,MoveRequest request) {
     boolean isTrapping = false;
     Snake futureSnake = request.getYou();
@@ -155,11 +156,9 @@ public class SnakeUtil {
       } else if (allowedMoves.size() == 1){
         futureMove = allowedMoves.get(0);
         futureLocation = getNextMoveCoords(futureMove, futureSnake.getBody().get(0));
-//        if(isCollidingWithSnake(futureLocation,request)
-//                && !futureLocation.equals(snakeBody.get(snakeBody.size() - 1))) {
-//          isTrapping = true;
-//        }
-        futureSnake.getBody().add(0, futureLocation);
+
+         futureSnake.getBody().add(0, futureLocation);
+         futureSnake.getBody().remove(futureSnake.getBody().size() - 1);
         request.setYou(futureSnake);
       } else {
         break;
@@ -190,15 +189,20 @@ public class SnakeUtil {
           if (hostileDistance < friendlyDistance
                   ||(hostileDistance == friendlyDistance && snake.getBody().size() >= body.size())) {
             isFoodOptimal = false;
-            log.info("ENEMY:" + snake.getBody().size() + "  YOU:" + body.size());
             break;
-//            log.info("ENEMY:" + hostileDistance + " ME:" + friendlyDistance + " " + food.toString());
           }
         }
         if(isFoodOptimal) {
           optimalFoods.add(food);
-          log.info(food.toString());
         }
+      }
+
+      if (optimalFoods.isEmpty()) {
+        optimalFoods.add(foods
+                .stream()
+                .max(Comparator.comparing(food -> getDistance(food,head)))
+                .orElseThrow(NoSuchElementException::new));
+        log.info("!!!!!CHOSE DISTANT!!!!!");
       }
       return optimalFoods;
     }
@@ -211,9 +215,9 @@ public class SnakeUtil {
     boolean isCollision = false;
     List<Coordinate> food = request.getBoard().getFood();
     List<Coordinate> friendlyBody = request.getYou().getBody();
-    Coordinate hostileCoordinate;
 
     for (Snake hostileSnake : hostileSnakes) {
+      log.info("FRIENDLY:" +  friendlyBody.size()+ " VS ENEMY:" + hostileSnake.getBody().size());
       if (friendlyBody.size() <= hostileSnake.getBody().size()) {
         Coordinate enemyHead = hostileSnake.getBody().get(0);
         possibleEnemyMoves = Arrays
