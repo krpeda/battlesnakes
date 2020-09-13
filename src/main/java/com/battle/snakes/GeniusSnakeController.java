@@ -36,49 +36,49 @@ public class GeniusSnakeController extends BaseController {
 
   @RequestMapping(value = "/move", method = RequestMethod.POST, produces = "application/json")
   public MoveResponse move(@RequestBody MoveRequest request) {
-
-    List<Coordinate> body = request.getYou().getBody();
     List<Coordinate> optimalFoods;
-    List<MoveType> moves = SnakeUtil.getAllowedMoves(request);
-    List<Snake> hostileSnakes = new ArrayList<>();
-    List<MoveType> dangerousMoves = new ArrayList<>();
     MoveType mostOptimalMove;
     Coordinate futureLocation;
     Coordinate optimalFood;
+    Snake futureSnake;
 
+    List<Coordinate> body = request.getYou().getBody();
     Coordinate head = body.get(0);
-    List<Coordinate> foods = request.getBoard().getFood();
+    List<MoveType> moves = SnakeUtil.getAllowedMoves(request);
+    List<Snake> hostileSnakes = new ArrayList<>();
+    List<MoveType> dangerousMoves = new ArrayList<>();
+    List<Coordinate> food = request.getBoard().getFood();
 
-
-    log.info(" TURN:" + request.getTurn());
-
+    log.info("|TURN|:" + request.getTurn());
     for (Snake snake: request.getBoard().getSnakes()) {
       if (!snake.getId().equals(request.getYou().getId())) {
         hostileSnakes.add(snake);
       }
     }
 
+    //Get the most optimal targets
     optimalFoods = SnakeUtil.getOptimalFoods(request,hostileSnakes);
 
     if (optimalFoods.size() < 1) {
-      optimalFoods = foods;
+      optimalFoods = food;
     }
-
     optimalFood = SnakeUtil.getNearestCoordinateToTarget(head, optimalFoods);
-    log.info(optimalFood.toString());
+    log.info("TARGET:" + optimalFood);
 
-    //TODO choose trapping move over collision
-    log.info("BEFORE COLLISION DETECT: "  + body.size());
+    //Determine if any moves are potentially trapping or dangerous
     if (!moves.isEmpty()) {
       for(MoveType moveType : moves) {
         futureLocation = SnakeUtil.getNextMoveCoords(moveType, head);
-          if(SnakeUtil.isTrappingMove(futureLocation, request)
-                  || SnakeUtil.isHeadCollision(hostileSnakes, request, futureLocation)) {
+        futureSnake = Snake.builder().body(body).build();
+        //Move head
+        futureSnake.getBody().add(0,futureLocation);
+          if(SnakeUtil.isHeadCollision(hostileSnakes, request, futureLocation)
+                  || SnakeUtil.isTrappingMove(request.getBoard(), futureSnake)) {
             dangerousMoves.add(moveType);
           }
       }
     }
-    log.info(dangerousMoves.toString());
+    log.info("DANGEROUS MOVES: " + dangerousMoves);
     moves.removeAll(dangerousMoves);
 
     if (moves.isEmpty()) {

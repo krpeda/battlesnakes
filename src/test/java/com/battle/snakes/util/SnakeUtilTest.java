@@ -2,13 +2,14 @@ package com.battle.snakes.util;
 
 import com.battle.snakes.game.*;
 import org.junit.jupiter.api.Test;
-
-import javax.validation.constraints.AssertTrue;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class SnakeUtilTest {
+
+    static final int BOARD_WIDTH = 15;
+    static final int BOARD_HEIGHT = 15;
 
     @Test
     void getRandomMove() {
@@ -22,23 +23,29 @@ class SnakeUtilTest {
 
     @Test
     void isTrappingMove() {
-        Snake snake = createSnake(3, 14);
-        for (int i = 0; i < 4;i++) {
+        Snake snake = createSnake(5, 14);
+        for (int i = 5; i >= 0;i--) {
             snake.getBody().add(createCoordinate(i,13));
         }
         MoveRequest request = createMoveRequestWithSnake(snake, BOARD_WIDTH, BOARD_HEIGHT);
+        snake.getBody().add(0, SnakeUtil.getNextMoveCoords(MoveType.LEFT,snake.getBody().get(0)));
 
-        assertTrue(SnakeUtil.isTrappingMove(createCoordinate(2,14),request));
-        assertFalse(SnakeUtil.isTrappingMove(createCoordinate(4,14),request));
+        assertTrue(SnakeUtil.isTrappingMove(request.getBoard(),snake));
+
+        snake.getBody().add(0,createCoordinate(6,14));
+
+        assertFalse(SnakeUtil.isTrappingMove(request.getBoard(),snake));
+
     }
 
     @Test
     void getOptimalFoods() {
+        List<Coordinate> optimalFoods;
+
         Snake snake = createSnake(4, 14);
         Snake enemySnake1 = createSnake(8, 14);
         enemySnake1.getBody().add(createCoordinate(9,14));
 
-        List<Coordinate> optimalFoods;
         List<Coordinate> food = new ArrayList<>();
         Coordinate closeFood = createCoordinate(4, 12);
         Coordinate largerSnakeFood = createCoordinate(6, 14);
@@ -71,13 +78,22 @@ class SnakeUtilTest {
         assertFalse(SnakeUtil.isHeadCollision(request.getBoard().getSnakes(),request,createCoordinate(7,12)));
     }
 
+    @Test
+    void isCollidingWithSnake() {
+        Snake snake = createSnake(7, 11);
+        Snake enemySnake = createSnake(8,11);
+
+        MoveRequest request = createMoveRequestWithSnake(snake, BOARD_WIDTH, BOARD_HEIGHT);
+        request.getBoard().getSnakes().add(enemySnake);
+
+        assertTrue(SnakeUtil.isCollidingWithSnake(createCoordinate(8,11), request));
+        assertFalse(SnakeUtil.isCollidingWithSnake(createCoordinate(7,12), request));
+    }
 
     //////////////////////////////////////////
     /*   DO NOT EDIT BELOW THIS LINE   */
     //////////////////////////////////////////
 
-    static final int BOARD_WIDTH = 15;
-    static final int BOARD_HEIGHT = 15;
 
     @Test
     void getNearestMoveToTarget() {
