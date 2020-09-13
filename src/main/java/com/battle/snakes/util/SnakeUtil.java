@@ -63,16 +63,15 @@ public class SnakeUtil {
   //todo write test
   public static boolean isCollidingWithSnake(Coordinate destination, MoveRequest request) {
     List<Coordinate> invalidCoordinates = new ArrayList<>();
-    List<Coordinate> protagonistBody;
+    List<Coordinate> friendlyBody;
 
-    protagonistBody = request.getYou().getBody();
+    friendlyBody = request.getYou().getBody();
 
-    //add all other snake bodies to invalid moves
+    //add all snake bodies to invalid moves
     for (Snake snake : request.getBoard().getSnakes()) {
       invalidCoordinates.addAll(snake.getBody());
     }
-    //add protagonist body to invalid moves
-    invalidCoordinates.addAll(protagonistBody);
+    invalidCoordinates.addAll(friendlyBody);
 
     return invalidCoordinates
             .stream()
@@ -139,24 +138,35 @@ public class SnakeUtil {
     return distances.get(Collections.min(distances.keySet()));
   }
 
-//  public static boolean isTrappingMove(Coordinate futureLocation, MoveType move, MoveRequest request) {
-//    Snake futureSnake = request.getYou();
-//    int i = 0;
-//    while(i < 3) {
-//      futureSnake.getBody().add(0, futureLocation);
-//      request.setYou(futureSnake);
-//      if(getAllowedMoves(request).size() < 1) {
-//        return true;
-//      } else {
-//        for (MoveType futureMove : getAllowedMoves(request)) {
-//          return isTrappingMove(getNextMoveCoords(futureMove,futureLocation), futureMove, request);
+  public static boolean isTrappingMove(Coordinate futureLocation,MoveRequest request) {
+    boolean isTrapping = false;
+    Snake futureSnake = request.getYou();
+    List<Coordinate> snakeBody = futureSnake.getBody();
+    MoveType futureMove;
+    List<MoveType> allowedMoves;
+
+    futureSnake.getBody().add(0, futureLocation);
+    request.setYou(futureSnake);
+
+    while(!isTrapping) {
+       allowedMoves = getAllowedMoves(request);
+      if(allowedMoves.size() < 1 ) {
+        isTrapping = true;
+      } else if (allowedMoves.size() == 1){
+        futureMove = allowedMoves.get(0);
+        futureLocation = getNextMoveCoords(futureMove, futureSnake.getBody().get(0));
+//        if(isCollidingWithSnake(futureLocation,request)
+//                && !futureLocation.equals(snakeBody.get(snakeBody.size() - 1))) {
+//          isTrapping = true;
 //        }
-//      }
-//      futureLocation = getNextMoveCoords(move, futureLocation);
-//      i++;
-//    }
-//    return false;
-//  }
+        futureSnake.getBody().add(0, futureLocation);
+        request.setYou(futureSnake);
+      } else {
+        break;
+      }
+    }
+    return isTrapping;
+  }
 
     //TODO write test
     public static List<Coordinate> getOptimalFoods(MoveRequest request, List<Snake> hostileSnakes) {
@@ -164,43 +174,59 @@ public class SnakeUtil {
       List<Coordinate> body = request.getYou().getBody();
       List<Coordinate> optimalFoods = new ArrayList<>();
       Coordinate hostileHead;
+      double hostileDistance;
+      double friendlyDistance;
+      boolean isFoodOptimal;
 
       Coordinate head = body.get(0);
       List<Coordinate> foods = request.getBoard().getFood();
 
       for(Coordinate food: foods) {
+        isFoodOptimal = true;
+        friendlyDistance = SnakeUtil.getDistance(head,food);
         for(Snake snake : hostileSnakes) {
           hostileHead = snake.getBody().get(0);
-          if (SnakeUtil.getDistance(hostileHead, food) > SnakeUtil.getDistance(head,food)) {
-            optimalFoods.add(food);
-//            log.info("ENEMY:" + SnakeUtil.getDistance(hostileHead, food) + " ME:" + SnakeUtil.getDistance(head,food));
-          } else if(snake.getBody().size() < body.size()
-                  && SnakeUtil.getDistance(hostileHead, food) == SnakeUtil.getDistance(head,food)) {
-//            log.info("ENEMY:" + snake.getBody().size() + "  YOU:" + body.size());
-            optimalFoods.add(food);
+          hostileDistance = SnakeUtil.getDistance(hostileHead, food);
+          if (hostileDistance < friendlyDistance
+                  ||(hostileDistance == friendlyDistance && snake.getBody().size() >= body.size())) {
+            isFoodOptimal = false;
+            log.info("ENEMY:" + snake.getBody().size() + "  YOU:" + body.size());
+            break;
+//            log.info("ENEMY:" + hostileDistance + " ME:" + friendlyDistance + " " + food.toString());
           }
+        }
+        if(isFoodOptimal) {
+          optimalFoods.add(food);
+          log.info(food.toString());
         }
       }
       return optimalFoods;
     }
 
-    public static boolean isHeadCollision(Snake enemySnake, List<Coordinate> food, Coordinate targetCoordinate) {
+    public static boolean isHeadCollision(List<Snake> hostileSnakes,  MoveRequest request, Coordinate targetCoordinate) {
 
-    Coordinate enemyTarget;
-    MoveType enemyMove;
+    Coordinate hostileTarget;
+    MoveType hostileMove;
+    List<MoveType> possibleEnemyMoves;
     boolean isCollision = false;
+    List<Coordinate> food = request.getBoard().getFood();
+    List<Coordinate> friendlyBody = request.getYou().getBody();
+    Coordinate hostileCoordinate;
 
-    Coordinate enemyHead = enemySnake.getBody().get(0);
-    List<MoveType> possibleEnemyMoves = Arrays
-            .stream(MoveType.values())
-            .collect(Collectors.toList());
-    enemyTarget = getNearestCoordinateToTarget(enemyHead, food);
-    enemyMove = getNearestMoveToTarget(enemyTarget,enemyHead, possibleEnemyMoves);
-
-    if(getNextMoveCoords(enemyMove,enemyHead).equals(targetCoordinate)) {
-      isCollision = true;
+    for (Snake hostileSnake : hostileSnakes) {
+      if (friendlyBody.size() <= hostileSnake.getBody().size()) {
+        Coordinate enemyHead = hostileSnake.getBody().get(0);
+        possibleEnemyMoves = Arrays
+                .stream(MoveType.values())
+                .collect(Collectors.toList());
+        hostileTarget = getNearestCoordinateToTarget(enemyHead, food);
+        hostileMove = getNearestMoveToTarget(hostileTarget,enemyHead, possibleEnemyMoves);
+        isCollision = getNextMoveCoords(hostileMove,enemyHead).equals(targetCoordinate);
+      }
     }
+      if(isCollision) {
+        log.info("COLLISION WARNING:" + targetCoordinate);
+      }
     return isCollision;
     }
-
 }

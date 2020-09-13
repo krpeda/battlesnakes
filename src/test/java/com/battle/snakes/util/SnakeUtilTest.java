@@ -3,9 +3,8 @@ package com.battle.snakes.util;
 import com.battle.snakes.game.*;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
+import javax.validation.constraints.AssertTrue;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,14 +13,64 @@ class SnakeUtilTest {
     @Test
     void getRandomMove() {
         // The problem with randomness is that you can never be sure...
-        List<MoveType> moveList = new ArrayList<>();
-        List<MoveType> emptyMoveList = new ArrayList<>();
-        moveList.add(MoveType.UP);
+        List<MoveType> moves = new ArrayList<>();
+        moves.add(MoveType.UP);
 
-        assertNull(SnakeUtil.getRandomMove(emptyMoveList));
-        assertNotNull(SnakeUtil.getRandomMove(moveList));
-        assertEquals(MoveType.UP, SnakeUtil.getRandomMove(moveList));
+        assertNotNull(SnakeUtil.getRandomMove(moves));
+        assertEquals(MoveType.UP, SnakeUtil.getRandomMove(moves));
     }
+
+    @Test
+    void isTrappingMove() {
+        Snake snake = createSnake(3, 14);
+        for (int i = 0; i < 4;i++) {
+            snake.getBody().add(createCoordinate(i,13));
+        }
+        MoveRequest request = createMoveRequestWithSnake(snake, BOARD_WIDTH, BOARD_HEIGHT);
+
+        assertTrue(SnakeUtil.isTrappingMove(createCoordinate(2,14),request));
+        assertFalse(SnakeUtil.isTrappingMove(createCoordinate(4,14),request));
+    }
+
+    @Test
+    void getOptimalFoods() {
+        Snake snake = createSnake(4, 14);
+        Snake enemySnake1 = createSnake(8, 14);
+        enemySnake1.getBody().add(createCoordinate(9,14));
+
+        List<Coordinate> optimalFoods;
+        List<Coordinate> food = new ArrayList<>();
+        Coordinate closeFood = createCoordinate(4, 12);
+        Coordinate largerSnakeFood = createCoordinate(6, 14);
+        Coordinate distantFood = createCoordinate(9,12);
+
+        food.add(closeFood);
+        food.add(largerSnakeFood);
+        food.add(distantFood);
+
+        MoveRequest request = createMoveRequestWithSnake(snake, BOARD_WIDTH, BOARD_HEIGHT);
+        request.getBoard().getSnakes().add(enemySnake1);
+        request.getBoard().setFood(food);
+
+        optimalFoods = SnakeUtil.getOptimalFoods(request, request.getBoard().getSnakes());
+        assertEquals(optimalFoods.get(0), closeFood);
+        assertEquals(optimalFoods.size(), 1);
+
+    }
+
+    @Test
+    void isHeadCollision() {
+        Snake snake = createSnake(7, 11);
+        Coordinate closeFood = createCoordinate(8, 11);
+        List<Coordinate> food = Collections.singletonList(closeFood);
+
+        MoveRequest request = createMoveRequestWithSnake(snake, BOARD_WIDTH, BOARD_HEIGHT);
+        request.getBoard().setFood(food);
+
+        assertTrue(SnakeUtil.isHeadCollision(request.getBoard().getSnakes(),request,createCoordinate(8,11)));
+        assertFalse(SnakeUtil.isHeadCollision(request.getBoard().getSnakes(),request,createCoordinate(7,12)));
+    }
+
 
     //////////////////////////////////////////
     /*   DO NOT EDIT BELOW THIS LINE   */

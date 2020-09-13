@@ -21,7 +21,7 @@ public class SmartSnakeController extends BaseController {
   @RequestMapping(value = "/start", method = RequestMethod.POST, produces = "application/json")
   public StartResponse start(@RequestBody StartRequest request) {
 
-    log.info(request.toString());
+//    log.info(request.toString());
 
     return StartResponse.builder()
       .color("#188936")
@@ -33,15 +33,13 @@ public class SmartSnakeController extends BaseController {
   @RequestMapping(value = "/end", method = RequestMethod.POST)
   public Object end(@RequestBody EndRequest request) {
 
-    log.info(request.toString());
+//    log.info(request.toString());
 
     return new HashMap<String, Object>();
   }
 
   @RequestMapping(value = "/move", method = RequestMethod.POST, produces = "application/json")
   public MoveResponse move(@RequestBody MoveRequest request) {
-
-    log.info(request.toString());
 
     List<MoveType> moves = SnakeUtil.getAllowedMoves(request);
     List<Coordinate> body = request.getYou().getBody();

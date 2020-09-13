@@ -40,36 +40,23 @@ public class GeniusSnakeController extends BaseController {
     List<Coordinate> body = request.getYou().getBody();
     List<Coordinate> optimalFoods;
     List<MoveType> moves = SnakeUtil.getAllowedMoves(request);
-    List<MoveType> futureMoves;
     List<Snake> hostileSnakes = new ArrayList<>();
-    Map<Integer, MoveType> optimalMoveMap = new HashMap<>();
     List<MoveType> dangerousMoves = new ArrayList<>();
     MoveType mostOptimalMove;
+    Coordinate futureLocation;
     Coordinate optimalFood;
-    Snake futureSnake;
-    MoveRequest futureRequest;
-
 
     Coordinate head = body.get(0);
     List<Coordinate> foods = request.getBoard().getFood();
+
 
     log.info(" TURN:" + request.getTurn());
 
     for (Snake snake: request.getBoard().getSnakes()) {
       if (!snake.getId().equals(request.getYou().getId())) {
         hostileSnakes.add(snake);
-        if (snake.getBody().size() >= body.size()) {
-          for(MoveType moveType : moves) {
-            if(SnakeUtil.isHeadCollision(snake,foods, SnakeUtil.getNextMoveCoords(moveType,head))) {
-              dangerousMoves.add(moveType);
-              log.info(moveType.toString()+ ": ENEMY: " + snake.getBody().size() + " ME: " + body.size());
-            }
-          }
-        }
       }
     }
-
-
 
     optimalFoods = SnakeUtil.getOptimalFoods(request,hostileSnakes);
 
@@ -80,24 +67,16 @@ public class GeniusSnakeController extends BaseController {
     optimalFood = SnakeUtil.getNearestCoordinateToTarget(head, optimalFoods);
     log.info(optimalFood.toString());
 
-//    if (moves.size() > 1) {
-//      for(MoveType moveType : moves) {
-//        futureSnake = request.getYou();
-//        futureSnake.getBody().add(0, SnakeUtil.getNextMoveCoords(moveType, head));
-//        futureRequest = request;
-//        futureRequest.setYou(futureSnake);
-//        futureMoves = SnakeUtil.getAllowedMoves(futureRequest);
-//
-//          optimalMoveMap.put(futureMoves.size(), moveType);
-//
-//      }
-//
-//      if(optimalMoveMap.keySet().stream().distinct().count() > 1) {
-//        moves.remove(optimalMoveMap.get(Collections.min(optimalMoveMap.keySet())));
-//        log.info("REMOVED MOVE:" + optimalMoveMap.get(Collections.min(optimalMoveMap.keySet())).toString());
-//      }
-//    }
-
+    if (!moves.isEmpty()) {
+      for(MoveType moveType : moves) {
+        futureLocation = SnakeUtil.getNextMoveCoords(moveType, head);
+          if(SnakeUtil.isTrappingMove(futureLocation, request)
+                  || SnakeUtil.isHeadCollision(hostileSnakes, request, futureLocation)) {
+            dangerousMoves.add(moveType);
+          }
+      }
+    }
+    log.info(dangerousMoves.toString());
     moves.removeAll(dangerousMoves);
 
     if (moves.isEmpty()) {
