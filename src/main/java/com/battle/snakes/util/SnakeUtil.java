@@ -93,7 +93,8 @@ public class SnakeUtil {
     }
     return distances.get(Collections.min(distances.keySet()));
   }
-  //Determine if coordinate is occupied by a snake
+
+  //Determine if a coordinate is occupied by a snake
   public static boolean isCollidingWithSnake(Coordinate destination, MoveRequest request) {
     List<Coordinate> friendlyBody = request.getYou().getBody();
     List<Coordinate> invalidCoordinates = new ArrayList<>();
@@ -112,16 +113,18 @@ public class SnakeUtil {
 
   //Simulate future position to determine if
   // move would result in the snake being stuck in a tunnel
-  public static boolean isTrappingMove(Board board, Snake futureSnake) {
+  public static boolean isTrappingMove(Coordinate futureLocation, MoveRequest request) {
     MoveType futureMove;
     List<MoveType> allowedMoves;
     boolean isTrapping = false;
-    Coordinate futureLocation;
+    List<Coordinate> futureBody = new ArrayList<>(request.getYou().getBody());
+    Snake futureSnake = Snake.builder().body(futureBody).build();
+    futureSnake.getBody().add(0, futureLocation);
 
     while(!isTrapping) {
       allowedMoves = getAllowedMoves(MoveRequest
                .builder()
-               .board(board)
+               .board(request.getBoard())
                .you(futureSnake).build());
       if(allowedMoves.size() < 1 ) {
         isTrapping = true;
@@ -136,7 +139,8 @@ public class SnakeUtil {
     return isTrapping;
   }
 
-    //Choose optimal target foods by comparing enemy size and distances to potential targets
+    //Choose optimal target foods by comparing
+    // enemy size and distances to potential targets
     public static List<Coordinate> getOptimalFoods(MoveRequest request, List<Snake> hostileSnakes) {
       Coordinate hostileHead;
       double hostileDistance;
@@ -184,7 +188,6 @@ public class SnakeUtil {
     List<Coordinate> body = request.getYou().getBody();
 
     for (Snake hostileSnake : hostileSnakes) {
-      log.info("YOUR SIZE:" + body.size() + "||HOSTILE SIZE:" + hostileSnake.getBody().size());
       if (body.size() <= hostileSnake.getBody().size()) {
         Coordinate enemyHead = hostileSnake.getBody().get(0);
         possibleEnemyMoves = Arrays

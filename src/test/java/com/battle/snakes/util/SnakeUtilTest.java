@@ -23,19 +23,14 @@ class SnakeUtilTest {
 
     @Test
     void isTrappingMove() {
-        Snake snake = createSnake(5, 14);
-        for (int i = 5; i >= 0;i--) {
+        Snake snake = createSnake(4, 14);
+        for (int i = 0; i < 5;i++) {
             snake.getBody().add(createCoordinate(i,13));
         }
         MoveRequest request = createMoveRequestWithSnake(snake, BOARD_WIDTH, BOARD_HEIGHT);
-        snake.getBody().add(0, SnakeUtil.getNextMoveCoords(MoveType.LEFT,snake.getBody().get(0)));
 
-        assertTrue(SnakeUtil.isTrappingMove(request.getBoard(),snake));
-
-        snake.getBody().add(0,createCoordinate(6,14));
-
-        assertFalse(SnakeUtil.isTrappingMove(request.getBoard(),snake));
-
+//        assertTrue(SnakeUtil.isTrappingMove(createCoordinate(3,14),request));
+//        assertFalse(SnakeUtil.isTrappingMove(createCoordinate(5,14), request));
     }
 
     @Test
@@ -74,6 +69,7 @@ class SnakeUtilTest {
         MoveRequest request = createMoveRequestWithSnake(snake, BOARD_WIDTH, BOARD_HEIGHT);
         request.getBoard().setFood(food);
 
+        SnakeUtil.isHeadCollision(request.getBoard().getSnakes(),request,createCoordinate(8,11));
         assertTrue(SnakeUtil.isHeadCollision(request.getBoard().getSnakes(),request,createCoordinate(8,11)));
         assertFalse(SnakeUtil.isHeadCollision(request.getBoard().getSnakes(),request,createCoordinate(7,12)));
     }

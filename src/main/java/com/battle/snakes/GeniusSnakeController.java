@@ -20,7 +20,7 @@ public class GeniusSnakeController extends BaseController {
   @RequestMapping(value = "/start", method = RequestMethod.POST, produces = "application/json")
   public StartResponse start(@RequestBody StartRequest request) {
 
-//    log.info(request.getBoard().getSnakes().toString());
+    log.info(request.getBoard().getSnakes().toString());
 
     return StartResponse.builder()
       .color("cf2400")
@@ -31,6 +31,7 @@ public class GeniusSnakeController extends BaseController {
 
   @RequestMapping(value = "/end", method = RequestMethod.POST)
   public Object end(@RequestBody EndRequest request) {
+    log.info(request.toString());
     return new HashMap<String, Object>();
   }
 
@@ -40,14 +41,13 @@ public class GeniusSnakeController extends BaseController {
     MoveType mostOptimalMove;
     Coordinate futureLocation;
     Coordinate optimalFood;
-    Snake futureSnake;
 
     List<Coordinate> body = request.getYou().getBody();
     Coordinate head = body.get(0);
     List<MoveType> moves = SnakeUtil.getAllowedMoves(request);
     List<Snake> hostileSnakes = new ArrayList<>();
-    List<MoveType> dangerousMoves = new ArrayList<>();
     List<Coordinate> food = request.getBoard().getFood();
+    List<MoveType> optimalMoves = new ArrayList<>();
 
     log.info("|TURN|:" + request.getTurn());
     for (Snake snake: request.getBoard().getSnakes()) {
@@ -69,25 +69,28 @@ public class GeniusSnakeController extends BaseController {
     if (!moves.isEmpty()) {
       for(MoveType moveType : moves) {
         futureLocation = SnakeUtil.getNextMoveCoords(moveType, head);
-        futureSnake = Snake.builder().body(body).build();
-        //Move head
-        futureSnake.getBody().add(0,futureLocation);
-          if(SnakeUtil.isHeadCollision(hostileSnakes, request, futureLocation)
-                  || SnakeUtil.isTrappingMove(request.getBoard(), futureSnake)) {
-            dangerousMoves.add(moveType);
+
+          if(!SnakeUtil.isHeadCollision(hostileSnakes, request, futureLocation)
+                  && !SnakeUtil.isTrappingMove(futureLocation,request)) {
+            optimalMoves.add(moveType);
           }
       }
     }
-    log.info("DANGEROUS MOVES: " + dangerousMoves);
-    moves.removeAll(dangerousMoves);
+    log.info("OPTIMAL MOVES: " + optimalMoves);
 
-    if (moves.isEmpty()) {
-      return MoveResponse.builder()
-              .move(MoveType.LEFT.getValue())
-              .build();
+    //If all the moves end in disaster then
+    //survive as long as possible
+    if (optimalMoves.isEmpty()) {
+      if (moves.isEmpty()) {
+        return MoveResponse.builder()
+                .move(MoveType.LEFT.getValue())
+                .build();
+      } else {
+        optimalMoves = moves;
+      }
     }
 
-    mostOptimalMove = SnakeUtil.getNearestMoveToTarget(optimalFood, head, moves);
+    mostOptimalMove = SnakeUtil.getNearestMoveToTarget(optimalFood, head, optimalMoves);
     return MoveResponse.builder()
             .move(mostOptimalMove.getValue())
             .build();
